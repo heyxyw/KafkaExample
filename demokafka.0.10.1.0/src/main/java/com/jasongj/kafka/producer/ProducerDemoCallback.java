@@ -1,17 +1,17 @@
 package com.jasongj.kafka.producer;
 
-import java.util.Properties;
-
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.util.Properties;
+
 public class ProducerDemoCallback {
 
 	public static void main(String[] args) throws Exception {
 		Properties props = new Properties();
-		props.put("bootstrap.servers", "kafka0:9092");
+		props.put("bootstrap.servers", "192.168.2.125:9092");
 		props.put("acks", "all");
 		props.put("retries", 3);
 		props.put("batch.size", 16384);

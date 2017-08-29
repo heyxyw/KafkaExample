@@ -1,0 +1,23 @@
+server:
+  port: 6666
+  context-path: /kafka-demo
+#girl:
+#  cupSize: dev
+#  age: 18
+spring:
+
+#  环境 jdk 1.8.0_131 + scala 2.12.2 + kafka_2.12-0.10.2.1 测试成功
+  kafka:
+    bootstrap-servers: 192.168.2.125:9092
+    consumer:
+      group-id: kafka-group-test
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+
+

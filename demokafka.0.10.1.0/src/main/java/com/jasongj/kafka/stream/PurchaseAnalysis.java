@@ -1,8 +1,10 @@
 package com.jasongj.kafka.stream;
 
-import java.io.IOException;
-import java.util.Properties;
-
+import com.jasongj.kafka.stream.model.Item;
+import com.jasongj.kafka.stream.model.Order;
+import com.jasongj.kafka.stream.model.User;
+import com.jasongj.kafka.stream.serdes.SerdesFactory;
+import com.jasongj.kafka.stream.timeextractor.OrderTimestampExtractor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -13,11 +15,8 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.KTable;
 
-import com.jasongj.kafka.stream.model.Item;
-import com.jasongj.kafka.stream.model.Order;
-import com.jasongj.kafka.stream.model.User;
-import com.jasongj.kafka.stream.serdes.SerdesFactory;
-import com.jasongj.kafka.stream.timeextractor.OrderTimestampExtractor;
+import java.io.IOException;
+import java.util.Properties;
 
 public class PurchaseAnalysis {
 
@@ -38,14 +37,22 @@ public class PurchaseAnalysis {
 //		itemTable.toStream().foreach((String itemName, Item item) -> System.out.printf("Item info %s-%s-%s-%s\n", item.getItemName(), item.getAddress(), item.getType(), item.getPrice()));
 		KTable<String, Double> kTable = orderStream
 				.leftJoin(userTable, (Order order, User user) -> OrderUser.fromOrderUser(order, user), Serdes.String(), SerdesFactory.serdFrom(Order.class))
+
 				.filter((String userName, OrderUser orderUser) -> orderUser.userAddress != null)
+
 				.map((String userName, OrderUser orderUser) -> new KeyValue<String, OrderUser>(orderUser.itemName, orderUser))
+
 				.through(Serdes.String(), SerdesFactory.serdFrom(OrderUser.class), (String key, OrderUser orderUser, int numPartitions) -> (orderUser.getItemName().hashCode() & 0x7FFFFFFF) % numPartitions, "orderuser-repartition-by-item")
+
 				.leftJoin(itemTable, (OrderUser orderUser, Item item) -> OrderUserItem.fromOrderUser(orderUser, item), Serdes.String(), SerdesFactory.serdFrom(OrderUser.class))
+
 				.filter((String item, OrderUserItem orderUserItem) -> StringUtils.compare(orderUserItem.userAddress, orderUserItem.itemAddress) == 0)
 //				.foreach((String itemName, OrderUserItem orderUserItem) -> System.out.printf("%s-%s-%s-%s\n", itemName, orderUserItem.itemAddress, orderUserItem.userName, orderUserItem.userAddress))
+
 				.map((String item, OrderUserItem orderUserItem) -> KeyValue.<String, Double>pair(orderUserItem.gender, (Double)(orderUserItem.quantity * orderUserItem.itemPrice)))
+
 				.groupByKey(Serdes.String(), Serdes.Double())
+				
 				.reduce((Double v1, Double v2) -> v1 + v2, "gender-amount-state-store");
 //		kTable.foreach((str, dou) -> System.out.printf("%s-%s\n", str, dou));
 		kTable

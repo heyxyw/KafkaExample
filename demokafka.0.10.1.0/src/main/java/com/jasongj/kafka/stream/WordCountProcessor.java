@@ -1,12 +1,12 @@
 package com.jasongj.kafka.stream;
 
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
+
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class WordCountProcessor implements Processor<String, String> {
 
@@ -23,6 +23,8 @@ public class WordCountProcessor implements Processor<String, String> {
 
 	@Override
 	public void process(String key, String value) {
+		System.out.println(String.format("WordCountP3:--> key:%s,v:%s",key,value));
+
 		Stream.of(value.toLowerCase().split(" ")).forEach((String word) -> {
 			Optional<Integer> counts = Optional.ofNullable(kvStore.get(word));
 			int count = counts.map(wordcount -> wordcount + 1).orElse(1);
@@ -34,10 +36,13 @@ public class WordCountProcessor implements Processor<String, String> {
 	public void punctuate(long timestamp) {
 		try (KeyValueIterator<String, Integer> iterator = this.kvStore.all()) {
 			iterator.forEachRemaining(entry -> {
+				System.out.println(entry.key+":"+entry.value);
 				context.forward(entry.key, entry.value);
-				this.kvStore.delete(entry.key);
+//				this.kvStore.delete(entry.key);
 			});
 		}
+
+
 		context.commit();
 	}
 

@@ -1,8 +1,5 @@
 package com.jasongj.kafka.stream;
 
-import java.util.Arrays;
-import java.util.Properties;
-
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -13,19 +10,22 @@ import org.apache.kafka.streams.kstream.KStreamBuilder;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
 
+import java.util.Arrays;
+import java.util.Properties;
+
 public class WordCountDSL {
 
 	public static void main(String[] args) throws InterruptedException {
 		Properties props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount-dsl");
-		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka0:19092");
-		props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "zookeeper0:12181/kafka");
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount-dslL");
+		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.2.125:9092");
+		props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "192.168.2.125:2181");
 		props.put(StreamsConfig.KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 		props.put(StreamsConfig.VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
 		KStreamBuilder builder = new KStreamBuilder();
-		KStream<String, String> stream = builder.stream("words");
+		KStream<String, String> stream = builder.stream("word1");
 //		stream.flatMapValues(values -> Arrays.asList(values.toLowerCase().split(" ")))
 //				.map((k, v) -> KeyValue.<String, String>pair(v, v)).groupByKey().aggregate(
 //						() -> 0L,
@@ -48,7 +48,9 @@ public class WordCountDSL {
 		.map((Windowed<String> window, Long value) -> {
 			return new KeyValue<String, String>(window.key(), String.format("key=%s, value=%s, start=%d, end=%d\n",window.key(), value, window.window().start(), window.window().end()));
 			});
-		kStream.to(Serdes.String(), Serdes.String(), "count");
+		kStream.to(Serdes.String(), Serdes.String(), "wordCount1");
+//		kStream.t
+//		kStream.to(new StringSerializer(),new StringSerializer(),"");
 		
 //		KTable<String, Long> kTable = stream.flatMapValues(values -> Arrays.asList(values.toLowerCase().split(" ")))
 //				.map((k, v) -> KeyValue.<String, String>pair(v, v)).groupByKey().count("Counts");
@@ -56,8 +58,8 @@ public class WordCountDSL {
 
 		KafkaStreams streams = new KafkaStreams(builder, props);
 		streams.start();
-		Thread.sleep(100000L);
-		streams.close();
+//		Thread.sleep(100000L);
+//		streams.close();
 	}
 
 }
